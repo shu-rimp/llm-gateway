@@ -1,0 +1,3 @@
+package com.shurimp.llmgateway.routing.infrastructure
+
+class OllamaClientMarker
