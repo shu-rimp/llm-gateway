@@ -1,6 +1,7 @@
 package com.shurimp.llmgateway.routing.api
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import jakarta.validation.constraints.NotEmpty
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 
@@ -8,7 +9,7 @@ import tools.jackson.databind.annotation.JsonNaming
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class ChatCompletionRequest(
     val model: String,
-    val messages: List<Message>,
+    @NotEmpty val messages: List<Message>,
     val temperature: Double? = null,
     val maxTokens: Int? = null, // max_tokens
     val stream: Boolean = false,
