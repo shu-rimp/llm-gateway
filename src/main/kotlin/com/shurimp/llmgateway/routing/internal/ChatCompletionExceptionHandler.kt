@@ -1,6 +1,8 @@
 package com.shurimp.llmgateway.routing.internal
 
 import com.shurimp.llmgateway.routing.domain.ProviderCallException
+import com.shurimp.llmgateway.shared.ErrorDetail
+import com.shurimp.llmgateway.shared.ErrorResponse
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

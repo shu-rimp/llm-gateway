@@ -1,4 +1,4 @@
-package com.shurimp.llmgateway.routing.internal
+package com.shurimp.llmgateway.shared
 
 data class ErrorDetail(
     val message: String,
