@@ -4,8 +4,8 @@ import com.shurimp.llmgateway.routing.api.ChatCompletionRequest
 import com.shurimp.llmgateway.routing.api.ChatCompletionResponse
 import com.shurimp.llmgateway.routing.domain.ProviderCallException
 import org.springframework.stereotype.Component
-import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientException
 
 @Component
 class OllamaClient(
@@ -27,7 +27,7 @@ class OllamaClient(
                     throw ProviderCallException("failed to call ollama provider: HTTP ${response.statusCode}")
                 }
                 .requiredBody(ChatCompletionResponse::class.java)
-        } catch (e: ResourceAccessException) { // 애초에 응답을 못 받은 경우
+        } catch (e: RestClientException) { // 애초에 응답을 못 받은 경우
             throw ProviderCallException("failed to call ollama provider", e)
         }
     }

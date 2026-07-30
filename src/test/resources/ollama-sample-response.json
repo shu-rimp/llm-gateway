@@ -1,0 +1,23 @@
+﻿{
+    "id":  "chatcmpl-814",
+    "object":  "chat.completion",
+    "created":  1784982263,
+    "model":  "gemma4:12b",
+    "system_fingerprint":  "fp_ollama",
+    "choices":  [
+                    {
+                        "index":  0,
+                        "message":  {
+                                        "role":  "assistant",
+                                        "content":  "Hello! How can I help you today?",
+                                        "reasoning":  "The user said \"hello\".\nThis is a standard greeting. The user is initiating contact.\n\n    *   Acknowledge the greeting.\n    *   Offer assistance (since I am an AI assistant).\n    *   Keep it friendly and helpful.\n\"Hello! How can I help you today?\" or \"Hi there! What\u0027s on your mind?\""
+                                    },
+                        "finish_reason":  "stop"
+                    }
+                ],
+    "usage":  {
+                  "prompt_tokens":  17,
+                  "completion_tokens":  90,
+                  "total_tokens":  107
+              }
+}
