@@ -3,14 +3,17 @@ package com.shurimp.llmgateway.routing.internal
 import com.shurimp.llmgateway.routing.api.ChatCompletionRequest
 import com.shurimp.llmgateway.routing.api.ChatCompletionResponse
 import com.shurimp.llmgateway.routing.api.RoutingPort
-import com.shurimp.llmgateway.routing.infrastructure.OllamaClient
+import com.shurimp.llmgateway.routing.infrastructure.ProviderClients
 import org.springframework.stereotype.Service
 
 @Service
 class RoutingService(
-    private val ollamaClient: OllamaClient,
+    private val providerClients: ProviderClients,
 ) : RoutingPort {
     override fun routeChatCompletion(request: ChatCompletionRequest): ChatCompletionResponse {
-        return ollamaClient.chatCompletion(request)
+        val client = providerClients.forModel(request.model)
+            ?: throw RoutingException(RoutingErrorCode.UNKNOWN_MODEL)
+
+        return client.chatCompletion(request)
     }
 }

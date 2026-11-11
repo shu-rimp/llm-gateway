@@ -8,5 +8,6 @@ enum class RoutingErrorCode(
     val message: String,
 ) {
     STREAMING_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "STREAMING_NOT_SUPPORTED", "streaming is not supported in v1"),
+    UNKNOWN_MODEL(HttpStatus.BAD_REQUEST, "UNKNOWN_MODEL", "requested model is not supported")
     ;
 }

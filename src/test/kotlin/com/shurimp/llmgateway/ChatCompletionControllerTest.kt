@@ -8,8 +8,11 @@ import com.shurimp.llmgateway.routing.api.RoutingPort
 import com.shurimp.llmgateway.routing.api.Usage
 import com.shurimp.llmgateway.routing.domain.ProviderCallException
 import com.shurimp.llmgateway.routing.internal.ChatCompletionController
+import com.shurimp.llmgateway.routing.internal.RoutingErrorCode
+import com.shurimp.llmgateway.routing.internal.RoutingException
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
+import org.mockito.BDDMockito.then
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.http.HttpStatus
@@ -69,6 +72,46 @@ class ChatCompletionControllerTest(@Autowired private val mvc: MockMvcTester) {
             .bodyJson().extractingPath("$.error.code").isEqualTo("PROVIDER_ERROR")
     }
 
+    @Test
+    fun `지원하지 않는 모델이면 400과 UNKNOWN_MODEL을 반환한다`() {
+        given(routingPort.routeChatCompletion(sampleRequest("gpt-4o")))
+            .willThrow(RoutingException(RoutingErrorCode.UNKNOWN_MODEL))
+
+        mvc.post().uri("/v1/chat/completions")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"model": "gpt-4o", "messages": [{"role": "user", "content": "hi"}]}""")
+            .exchange()
+            .assertThat()
+            .hasStatus(HttpStatus.BAD_REQUEST)
+            .bodyJson().extractingPath("$.error.code").isEqualTo("UNKNOWN_MODEL")
+    }
+
+    @Test
+    fun `max_tokens 값이 0 이하면 INVALID_REQUEST를 반환한다`() {
+        mvc.post().uri("/v1/chat/completions")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"model": "gemma4:12b", "messages": [{"role": "user", "content": "hi"}], "max_tokens": 0}""")
+            .exchange()
+            .assertThat()
+            .hasStatus(HttpStatus.BAD_REQUEST)
+            .bodyJson().extractingPath("$.error.code").isEqualTo("INVALID_REQUEST")
+
+        then(routingPort).shouldHaveNoMoreInteractions()
+    }
+
+    @Test
+    fun `허용되지 않은 role이면 400과 INVALID_REQUEST를 반환한다`() {
+        mvc.post().uri("/v1/chat/completions")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"model": "gemma4:12b", "messages": [{"role": "이상한역할", "content": "hi"}]}""")
+            .exchange()
+            .assertThat()
+            .hasStatus(HttpStatus.BAD_REQUEST)
+            .bodyJson().extractingPath("$.error.code").isEqualTo("INVALID_REQUEST")
+
+        then(routingPort).shouldHaveNoMoreInteractions()
+    }
+
     private fun sampleResponse() = ChatCompletionResponse(
         objectType = "chat.completion",
         id = "chatcmpl-test",
@@ -88,8 +131,8 @@ class ChatCompletionControllerTest(@Autowired private val mvc: MockMvcTester) {
         )
     )
 
-    private fun sampleRequest() = ChatCompletionRequest (
-        model = "gemma4:12b",
+    private fun sampleRequest(model: String = "gemma4:12b") = ChatCompletionRequest (
+        model = model,
         messages = listOf(
             Message(
                 role = "user",
