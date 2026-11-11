@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: 'timescale/timescaledb:2.28.3-pg17'
+    image: 'postgres:17'
     environment:
       - 'POSTGRES_DB=llm_gateway'
       - 'POSTGRES_USER=llm_gateway'
