@@ -21,12 +21,13 @@ class EvalRunExecutor(
     private val caseRepository: EvalCaseRepository,
     private val resultRepository: EvalResultRepository,
     private val routingPort: RoutingPort,
+    private val judgeService: JudgeService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
     fun execute(runId: Long) {
-        val run = runRepository.findByIdOrNull(runId)?:
-            return log.warn("run ID: {} does not exist", runId)
+        val run = runRepository.findByIdOrNull(runId)
+            ?: return log.warn("run ID: {} does not exist", runId)
 
         run.start()
         runRepository.save(run)
@@ -62,14 +63,26 @@ class EvalRunExecutor(
                     )
                 )
             }
+            val answer = response.choices.firstOrNull()?.message?.content
+
+            val containsPass = case.mustContain?.let { keyword ->
+                answer?.contains(keyword, ignoreCase = true)?: false
+            }
+            val result = answer?.let { judgeService.judge(case, it) }
+            result?.exceptionOrNull()?.let { log.warn("judge failed for case ID {} in run ID {}", caseId, runId, it) }
+
             EvalResult(
                 runId = runId,
                 caseId = caseId,
-                answer = response.choices.firstOrNull()?.message?.content,
+                answer = answer,
                 latencyMs = elapsed.inWholeMilliseconds.toInt(),
+                containsPass = containsPass,
+                judgeScore = result?.getOrNull()?.score,
+                judgeReason = result?.getOrNull()?.reason,
+                error = result?.exceptionOrNull()?.let { "judge failed: ${it.message}" }
             )
         }.getOrElse { e ->
-            log.warn("case ID {} failed in run ID {}", case.id, run.id, e)
+            log.warn("case ID {} failed in run ID {}", caseId, runId, e)
             EvalResult(
                 runId = runId,
                 caseId = caseId,
