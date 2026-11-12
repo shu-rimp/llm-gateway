@@ -8,9 +8,9 @@ import com.shurimp.llmgateway.routing.infrastructure.ProviderClients
 import com.shurimp.llmgateway.routing.internal.RoutingErrorCode
 import com.shurimp.llmgateway.routing.internal.RoutingException
 import com.shurimp.llmgateway.routing.internal.RoutingService
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.assertj.core.api.Assertions.assertThat
 import org.springframework.web.client.RestClient
 import java.time.Duration
 
@@ -29,6 +29,20 @@ class RoutingServiceTest {
         }
 
         assertThat(e.errorCode).isEqualTo(RoutingErrorCode.UNKNOWN_MODEL)
+    }
+
+    @Test
+    fun `지원하는 모델이면 supports 메소드가 true를 반환한다`() {
+        val supported = service.supports("gemma4:12b")
+
+        assertThat(supported).isTrue
+    }
+
+    @Test
+    fun `지원하지 않는 모델이면 supports 메소드가 false를 반환한다`() {
+        val supported = service.supports("gpt-4o")
+
+        assertThat(supported).isFalse
     }
 
     private fun sampleRequest(model: String = "gemma4:12b") = ChatCompletionRequest (

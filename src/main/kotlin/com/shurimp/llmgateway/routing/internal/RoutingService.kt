@@ -16,4 +16,7 @@ class RoutingService(
 
         return client.chatCompletion(request)
     }
+
+    override fun supports(model: String): Boolean =
+        providerClients.forModel(model) != null
 }
