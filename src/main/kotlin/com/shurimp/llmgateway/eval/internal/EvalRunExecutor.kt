@@ -22,6 +22,7 @@ class EvalRunExecutor(
     private val resultRepository: EvalResultRepository,
     private val routingPort: RoutingPort,
     private val judgeService: JudgeService,
+    private val properties: EvalProperties,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -60,16 +61,25 @@ class EvalRunExecutor(
                             )
                         ),
                         temperature = 0.0,
+                        maxTokens = properties.maxTokens,
                     )
                 )
             }
-            val answer = response.choices.firstOrNull()?.message?.content
+
+            val choice = response.choices.firstOrNull()
+            val answer = choice?.message?.content?.takeIf { it.isNotBlank() }
+                ?: return EvalResult(
+                    runId = runId,
+                    caseId = caseId,
+                    latencyMs = elapsed.inWholeMilliseconds.toInt(),
+                    error = "empty answer (finish_reason=${choice?.finishReason})",
+                )
 
             val containsPass = case.mustContain?.let { keyword ->
-                answer?.contains(keyword, ignoreCase = true)?: false
+                answer.contains(keyword, ignoreCase = true)
             }
-            val result = answer?.let { judgeService.judge(case, it) }
-            result?.exceptionOrNull()?.let { log.warn("judge failed for case ID {} in run ID {}", caseId, runId, it) }
+            val result = judgeService.judge(case, answer)
+            result.exceptionOrNull()?.let { log.warn("judge failed for case ID {} in run ID {}", caseId, runId, it) }
 
             EvalResult(
                 runId = runId,
@@ -77,9 +87,9 @@ class EvalRunExecutor(
                 answer = answer,
                 latencyMs = elapsed.inWholeMilliseconds.toInt(),
                 containsPass = containsPass,
-                judgeScore = result?.getOrNull()?.score,
-                judgeReason = result?.getOrNull()?.reason,
-                error = result?.exceptionOrNull()?.let { "judge failed: ${it.message}" }
+                judgeScore = result.getOrNull()?.score,
+                judgeReason = result.getOrNull()?.reason,
+                error = result.exceptionOrNull()?.let { "judge failed: ${it.message}" }
             )
         }.getOrElse { e ->
             log.warn("case ID {} failed in run ID {}", caseId, runId, e)
