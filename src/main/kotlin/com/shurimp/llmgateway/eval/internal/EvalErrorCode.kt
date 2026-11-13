@@ -8,5 +8,6 @@ enum class EvalErrorCode(
     val message: String,
 ) {
     UNKNOWN_MODEL(HttpStatus.BAD_REQUEST, "UNKNOWN_MODEL", "requested model is not supported"),
+    RUN_NOT_FOUND(HttpStatus.NOT_FOUND, "RUN_NOT_FOUND", "eval run not found"),
     ;
 }
